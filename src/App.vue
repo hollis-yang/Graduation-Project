@@ -2,7 +2,7 @@
   <div id="cesiumContainer"></div>
   <button style="position: absolute; top: 10px; left: 10px;" @click="playVideo">Play</button>
   <button style="position: absolute; top: 10px; left: 70px;" @click="pauseVideo">Pause</button>
-  <button style="position: absolute; top: 50px; left: 10px;" @click="addCamera([117.205457, 31.842984, 63.9])">Add
+  <button style="position: absolute; top: 50px; left: 10px;" @click="addCamera([117.205457, 31.842984, 30], [75, 55, 200, 45, -10])">Add
     Camera</button>
   <button style="position: absolute; top: 10px; left: 150px;" @click="toggleFrustum">Toggle Frustum</button>
 </template>
@@ -10,6 +10,7 @@
 <script setup>
 import { onMounted } from 'vue'
 import * as Cesium from 'cesium'
+import { getCameraProjection } from './utils/camera'
 
 
 let viewer
@@ -31,7 +32,7 @@ function pauseVideo() {
 
 
 // 指定位置添加监控
-function addCamera(position, params = {}) {
+function addCamera(position, settings) {
   // 监控位置
   const cameraPosition = Cesium.Cartesian3.fromDegrees(position[0], position[1], position[2])
 
@@ -68,19 +69,22 @@ function addCamera(position, params = {}) {
       // alpha: 0.5
     })
 
-    // 添加带有视频材质的平面到场景中
+    // 定义梯形的顶点坐标
+    const trapezoidCoordinates = getCameraProjection(position, settings)
+
+    // 添加带有视频材质的梯形到场景中
     viewer.entities.add({
-      name: 'Video Plane',
+      name: 'Video Trapezoid',
       position: cameraPosition,
-      rectangle: {
-        coordinates: Cesium.Rectangle.fromDegrees(position[0] - 0.001, position[1] - 0.0005, position[0] + 0.001, position[1] + 0.0005),  // 后续要写一个控制范围的函数
+      polygon: {
+        hierarchy: Cesium.Cartesian3.fromDegreesArray(trapezoidCoordinates.flat()),
         material: videoMaterial
       }
     })
 
     // 创建线段表示视锥体
     frustumLines = []
-    createFrustrum(cameraPosition)
+    createFrustrum(cameraPosition, trapezoidCoordinates.map(coord => Cesium.Cartesian3.fromDegrees(coord[0], coord[1])))
 
     // 创建mask
     // addMask(cameraPosition)
@@ -91,7 +95,7 @@ function addCamera(position, params = {}) {
 /**
  * 创建视锥体及显隐控制
  */
-function createFrustrum(position) {
+function createFrustrum(position, points) {
   function createLine(start, end) {
     return viewer.entities.add({
       polyline: {
@@ -101,14 +105,6 @@ function createFrustrum(position) {
       }
     })
   }
-
-  const offset = 0.0005
-  const points = [
-    Cesium.Cartesian3.fromDegrees(117.205457 - offset, 31.842984 - offset, 0),
-    Cesium.Cartesian3.fromDegrees(117.205457 + offset, 31.842984 - offset, 0),
-    Cesium.Cartesian3.fromDegrees(117.205457 + offset, 31.842984 + offset, 0),
-    Cesium.Cartesian3.fromDegrees(117.205457 - offset, 31.842984 + offset, 0)
-  ]
 
   for (const point of points) {
     frustumLines.push(createLine(position, point))
