@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "3d-tiles-tools": "^0.3.2",
+    "axios": "^1.7.7",
     "cesium": "1.99",
     "vite-plugin-cesium": "^1.2.22",
     "vue": "^3.3.11"
