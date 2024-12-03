@@ -1,10 +1,23 @@
 <template>
   <div id="cesiumContainer"></div>
-  <button style="position: absolute; top: 10px; left: 10px;" @click="playVideo">Play</button>
-  <button style="position: absolute; top: 10px; left: 70px;" @click="pauseVideo">Pause</button>
-  <button style="position: absolute; top: 50px; left: 10px;" @click="addCamera([117.205457, 31.842984, 30], [75, 55, 200, 45, -10])">Add
-    Camera</button>
-  <button style="position: absolute; top: 10px; left: 150px;" @click="toggleFrustum">Toggle Frustum</button>
+  <button style="position: absolute; top: 10px; left: 10px;" @click="playVideo">
+    Play
+  </button>
+  <button
+    style="position: absolute; top: 10px; left: 70px;"
+    @click="pauseVideo">
+    Pause
+  </button>
+  <button
+    style="position: absolute; top: 50px; left: 10px;"
+    @click="addCamera([118.166, 30.143, 300], [75, 55, 200, 45, -10])">
+    Add Camera
+  </button>
+  <button
+    style="position: absolute; top: 10px; left: 150px;"
+    @click="toggleFrustum">
+    Toggle Frustum
+  </button>
 </template>
 
 <script setup>
@@ -12,12 +25,10 @@ import { onMounted } from 'vue'
 import * as Cesium from 'cesium'
 import { getCameraProjection } from './utils/camera'
 
-
 let viewer
 let videoElement
 let frustumLines = []
 
-// 控制视频播放和暂停
 function playVideo() {
   videoElement.play().then(() => {
     console.log('Video playing')
@@ -25,102 +36,110 @@ function playVideo() {
     console.error('Video play error:', error)
   })
 }
+
 function pauseVideo() {
   videoElement.pause()
   console.log('Video paused')
 }
 
+async function addCamera(position, settings) {
+  try {
+    const terrainSamplePositions = [Cesium.Cartographic.fromDegrees(position[0], position[1])]
+    const updatedPositions = await Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, terrainSamplePositions)
+    const baseHeight = updatedPositions[0].height
 
-// 指定位置添加监控
-function addCamera(position, settings) {
-  // 监控位置
-  const cameraPosition = Cesium.Cartesian3.fromDegrees(position[0], position[1], position[2])
+    const cameraPosition = Cesium.Cartesian3.fromDegrees(position[0], position[1], baseHeight + position[2])
 
-  // 创建视频元素
-  videoElement = document.createElement('video')
-  videoElement.src = './lukou.mp4'
-  videoElement.setAttribute('muted', 'muted')
-  videoElement.setAttribute('autoplay', 'autoplay')
-  videoElement.setAttribute('loop', 'loop')
-  videoElement.style.display = 'none'
-  document.body.appendChild(videoElement)
-
-  // 视频加载错误处理
-  videoElement.addEventListener('error', function (event) {
-    console.error('Video error:', event)
-    alert('视频加载错误，请检查视频路径和服务器配置')
-  })
-
-  // 等待视频加载完成后添加到Cesium场景
-  videoElement.addEventListener('loadeddata', function () {
-    console.log('Video loaded, ready to play:', videoElement)
-
-    // 确保视频播放
-    videoElement.play().then(() => {
-      console.log('Video playing')
-    }).catch(error => {
-      console.error('Video play error:', error)
-    })
-
-    // 创建视频材质
-    const videoMaterial = new Cesium.ImageMaterialProperty({
-      image: videoElement,
-      transparent: true,
-      // alpha: 0.5
-    })
-
-    // 定义梯形的顶点坐标
-    const trapezoidCoordinates = getCameraProjection(position, settings)
-
-    // 添加带有视频材质的梯形到场景中
-    viewer.entities.add({
-      name: 'Video Trapezoid',
-      position: cameraPosition,
-      polygon: {
-        hierarchy: Cesium.Cartesian3.fromDegreesArray(trapezoidCoordinates.flat()),
-        material: videoMaterial
-      }
-    })
-
-    // 创建线段表示视锥体
-    frustumLines = []
-    createFrustrum(cameraPosition, trapezoidCoordinates.map(coord => Cesium.Cartesian3.fromDegrees(coord[0], coord[1])))
-
-    // 创建mask
-    // addMask(cameraPosition)
-  })
-}
-
-
-/**
- * 创建视锥体及显隐控制
- */
-function createFrustrum(position, points) {
-  function createLine(start, end) {
-    return viewer.entities.add({
+    // 添加摄像头线条，从地形开始并加上偏移高度
+    const cameraLineStart = Cesium.Cartesian3.fromDegrees(position[0], position[1], baseHeight)
+    const cameraLine = viewer.entities.add({
+      name: 'Camera Line',
       polyline: {
-        positions: [start, end],
-        width: 2,
-        material: Cesium.Color.WHITE
+        positions: [cameraLineStart, cameraPosition],
+        width: 5,
+        material: Cesium.Color.RED
       }
     })
-  }
 
-  for (const point of points) {
-    frustumLines.push(createLine(position, point))
+    videoElement = document.createElement('video')
+    videoElement.src = './lukou.mp4'
+    videoElement.setAttribute('muted', 'muted')
+    videoElement.setAttribute('autoplay', 'autoplay')
+    videoElement.setAttribute('loop', 'loop')
+    videoElement.style.display = 'none'
+    document.body.appendChild(videoElement)
+
+    videoElement.addEventListener('error', function (event) {
+      console.error('Video error:', event)
+      alert('视频加载错误，请检查视频路径和服务器配置')
+    })
+
+    videoElement.addEventListener('loadeddata', function () {
+      console.log('Video loaded, ready to play:', videoElement)
+      videoElement.play().then(() => {
+        console.log('Video playing')
+      }).catch(error => {
+        console.error('Video play error:', error)
+      })
+
+      const videoMaterial = new Cesium.ImageMaterialProperty({
+        image: videoElement,
+        transparent: true,
+      })
+
+      const trapezoidCoordinates = getCameraProjection([position[0], position[1], baseHeight], settings)
+
+      viewer.entities.add({
+        name: 'Video Trapezoid',
+        position: cameraPosition,
+        polygon: {
+          hierarchy: Cesium.Cartesian3.fromDegreesArray(trapezoidCoordinates.flat()),
+          material: videoMaterial
+        }
+      })
+
+      createFrustrum(cameraPosition, trapezoidCoordinates)
+
+      // addMask(cameraPosition)
+    })
+  } catch (error) {
+    console.error('Error accessing terrain data:', error)
   }
 }
+
+async function createFrustrum(position, points) {
+  try {
+    const cartographicPoints = points.map(point => Cesium.Cartographic.fromDegrees(point[0], point[1]))
+    const updatedPositions = await Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, cartographicPoints)
+
+    function createLine(start, end) {
+      return viewer.entities.add({
+        polyline: {
+          positions: [start, end],
+          width: 2,
+          material: Cesium.Color.WHITE
+        }
+      })
+    }
+
+    for (const updatedPosition of updatedPositions) {
+      const endPoint = Cesium.Cartesian3.fromRadians(updatedPosition.longitude, updatedPosition.latitude, updatedPosition.height)
+      frustumLines.push(createLine(position, endPoint))
+    }
+  } catch (error) {
+    console.error('Error accessing terrain data for frustum:', error)
+  }
+}
+
 function toggleFrustum() {
   frustumLines.forEach(line => {
     line.show = !line.show
   })
 }
 
-
 function addMask(position) {
-  // 创建遮罩Canvas
   const maskImage = new Image()
-  maskImage.src = './video-mask.png' // 这里是你的羽化遮罩图片路径
+  maskImage.src = './video-mask.png' 
 
   maskImage.onload = function () {
     const canvas = document.createElement('canvas')
@@ -139,18 +158,16 @@ function addMask(position) {
 
     updateCanvas()
 
-    // 创建视频材质
     const videoMaterial = new Cesium.ImageMaterialProperty({
       image: canvas,
       transparent: true
     })
 
-    // 添加带有视频材质的平面到场景中
     viewer.entities.add({
       name: 'Video Plane',
       position: position,
       rectangle: {
-        coordinates: Cesium.Rectangle.fromDegrees(117.205457 - 0.0012, 31.842984 - 0.0007, 117.205457 + 0.0012, 31.842984 + 0.0007),
+        coordinates: Cesium.Rectangle.fromDegrees(118.166 - 0.0012, 30.143 - 0.0007, 118.166 + 0.0012, 30.143 + 0.0007),
         material: videoMaterial
       }
     })
@@ -173,13 +190,13 @@ onMounted(() => {
     timeline: false,
     navigationHelpButton: false,
     navigationInstructionsInitiallyVisible: false,
+    terrainProvider: Cesium.createWorldTerrain() 
   })
   viewer._cesiumWidget._creditContainer.style.display = 'none'
   viewer.clock.shouldAnimate = true
 
-  // 默认视角
   viewer.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(117.205457, 31.842984, 500),
+    destination: Cesium.Cartesian3.fromDegrees(118.166, 30.143, 500),
     orientation: {
       heading: Cesium.Math.toRadians(0),
       pitch: Cesium.Math.toRadians(-90),
@@ -198,7 +215,6 @@ onMounted(() => {
 
 button {
   z-index: 1000;
-  /* 确保按钮在Cesium Canvas上显示 */
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 5px;

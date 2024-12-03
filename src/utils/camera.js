@@ -1,31 +1,17 @@
-function lonLatToXY(lon, lat) {
-  const R = 6378137 // Earth's radius in meters
-  let x = R * toRadians(lon)
-  let y = R * Math.log(Math.tan(Math.PI / 4 + toRadians(lat) / 2))
-  return [x, y]
-}
+import proj4 from 'proj4';
 
-function xyToLonLat(x, y) {
-  const R = 6378137 // Earth's radius in meters
-  let lon = toDegrees(x / R)
-  let lat = toDegrees(2 * Math.atan(Math.exp(y / R)) - Math.PI / 2)
-  return [lon, lat]
-}
+// 定义EPSG:4326 (WGS84) 和 EPSG:32651 (UTM zone 51N) 的转换
+const wgs84 = 'EPSG:4326';
+const utm51n = 'EPSG:32651';
 
-function toRadians(degree) {
-  return degree * (Math.PI / 180)
-}
-
-function toDegrees(radian) {
-  return radian * (180 / Math.PI)
-}
+proj4.defs(utm51n, '+proj=utm +zone=51 +datum=WGS84 +units=m +no_defs');
 
 export function getCameraProjection(position, settings) {
   let [lon, lat, z] = position;
   let [angle1, angle2, distance, heading, pitch] = settings;
 
-  // Convert lon/lat to XY
-  let [x, y] = lonLatToXY(lon, lat);
+  // Convert lon/lat to UTM coordinates
+  let [x, y] = proj4(wgs84, utm51n, [lon, lat]);
 
   // Convert angles to radians
   heading = toRadians(heading);
@@ -49,11 +35,11 @@ export function getCameraProjection(position, settings) {
   let rotatedCorners = corners.map((corner) => {
     let [cx, cy, cz] = corner;
 
-    // Rotate around the x-axis by pitch
+    // Apply pitch rotation around the x-axis
     let pcy = cy * Math.cos(pitch) - cz * Math.sin(pitch);
     let pcz = cy * Math.sin(pitch) + cz * Math.cos(pitch);
 
-    // Rotate around the z-axis by heading
+    // Apply heading rotation around the z-axis
     let pcx = cx * Math.cos(heading) - pcy * Math.sin(heading);
     pcy = cx * Math.sin(heading) + pcy * Math.cos(heading);
 
@@ -63,13 +49,23 @@ export function getCameraProjection(position, settings) {
 
   // Project the 3D points to the 2D ground plane (z=0)
   let projection = rotatedCorners.map(([cx, cy, cz]) => {
+    if (cz <= 0) {
+      return null; // Ignore points behind the camera
+    }
     let t = z / (z - cz); // Calculate the scaling factor
     return [x + t * (cx - x), y + t * (cy - y)];
-  });
+  }).filter(point => point !== null); // Remove null points
 
   // Convert the projected points back to lon/lat
-  let latLonProjection = projection.map(([px, py]) => xyToLonLat(px, py));
+  let latLonProjection = projection.map(([px, py]) => proj4(utm51n, wgs84, [px, py]));
 
-  // Flatten the array to [lon1, lat1, lon2, lat2, ...]
   return latLonProjection;
+}
+
+function toRadians(degree) {
+  return degree * (Math.PI / 180);
+}
+
+function toDegrees(radian) {
+  return radian * (180 / Math.PI);
 }
