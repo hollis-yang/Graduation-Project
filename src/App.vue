@@ -42,6 +42,74 @@ function pauseVideo() {
   console.log('Video paused')
 }
 
+// async function addCamera(position, settings) {
+//   try {
+//     const terrainSamplePositions = [Cesium.Cartographic.fromDegrees(position[0], position[1])]
+//     const updatedPositions = await Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, terrainSamplePositions)
+//     const baseHeight = updatedPositions[0].height
+
+//     const cameraPosition = Cesium.Cartesian3.fromDegrees(position[0], position[1], baseHeight + position[2])
+
+//     // 添加摄像头线条，从地形开始并加上偏移高度
+//     const cameraLineStart = Cesium.Cartesian3.fromDegrees(position[0], position[1], baseHeight)
+//     const cameraLine = viewer.entities.add({
+//       name: 'Camera Line',
+//       polyline: {
+//         positions: [cameraLineStart, cameraPosition],
+//         width: 5,
+//         material: Cesium.Color.RED
+//       }
+//     })
+
+//     videoElement = document.createElement('video')
+//     // videoElement.src = './lukou.mp4'
+//     videoElement.src = 'http://hls01open.ys7.com/openlive/50c94278dd444de194c8f9251b4db27e.m3u8'
+//     videoElement.setAttribute('muted', 'muted')
+//     videoElement.setAttribute('autoplay', 'autoplay')
+//     videoElement.setAttribute('loop', 'loop')
+//     videoElement.style.display = 'none'
+//     document.body.appendChild(videoElement)
+
+//     videoElement.addEventListener('error', function (event) {
+//       console.error('Video error:', event)
+//       alert('视频加载错误，请检查视频路径和服务器配置')
+//     })
+
+//     videoElement.addEventListener('loadeddata', function () {
+//       console.log('Video loaded, ready to play:', videoElement)
+//       videoElement.play().then(() => {
+//         console.log('Video playing')
+//       }).catch(error => {
+//         console.error('Video play error:', error)
+//       })
+
+//       const videoMaterial = new Cesium.ImageMaterialProperty({
+//         image: videoElement,
+//         transparent: true,
+//       })
+
+//       const trapezoidCoordinates = getCameraProjection([position[0], position[1], baseHeight], settings)
+
+//       viewer.entities.add({
+//         name: 'Video Trapezoid',
+//         position: cameraPosition,
+//         polygon: {
+//           hierarchy: Cesium.Cartesian3.fromDegreesArray(trapezoidCoordinates.flat()),
+//           material: videoMaterial
+//         }
+//       })
+
+//       createFrustrum(cameraPosition, trapezoidCoordinates)
+
+//       // addMask(cameraPosition)
+//     })
+//   } catch (error) {
+//     console.error('Error accessing terrain data:', error)
+//   }
+// }
+
+import Hls from 'hls.js'
+
 async function addCamera(position, settings) {
   try {
     const terrainSamplePositions = [Cesium.Cartographic.fromDegrees(position[0], position[1])]
@@ -50,7 +118,6 @@ async function addCamera(position, settings) {
 
     const cameraPosition = Cesium.Cartesian3.fromDegrees(position[0], position[1], baseHeight + position[2])
 
-    // 添加摄像头线条，从地形开始并加上偏移高度
     const cameraLineStart = Cesium.Cartesian3.fromDegrees(position[0], position[1], baseHeight)
     const cameraLine = viewer.entities.add({
       name: 'Camera Line',
@@ -62,12 +129,35 @@ async function addCamera(position, settings) {
     })
 
     videoElement = document.createElement('video')
-    videoElement.src = './lukou.mp4'
     videoElement.setAttribute('muted', 'muted')
     videoElement.setAttribute('autoplay', 'autoplay')
     videoElement.setAttribute('loop', 'loop')
     videoElement.style.display = 'none'
     document.body.appendChild(videoElement)
+
+    if (Hls.isSupported()) {
+      const hls = new Hls()
+      hls.loadSource('http://hls01open.ys7.com/openlive/50c94278dd444de194c8f9251b4db27e.m3u8')
+      hls.attachMedia(videoElement)
+      hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        videoElement.play().then(() => {
+          console.log('Video playing')
+        }).catch(error => {
+          console.error('Video play error:', error)
+        })
+      })
+    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+      videoElement.src = 'http://hls01open.ys7.com/openlive/50c94278dd444de194c8f9251b4db27e.m3u8'
+      videoElement.addEventListener('loadedmetadata', function () {
+        videoElement.play().then(() => {
+          console.log('Video playing')
+        }).catch(error => {
+          console.error('Video play error:', error)
+        })
+      })
+    } else {
+      console.error('HLS.js is not supported in this browser.')
+    }
 
     videoElement.addEventListener('error', function (event) {
       console.error('Video error:', event)
@@ -76,11 +166,6 @@ async function addCamera(position, settings) {
 
     videoElement.addEventListener('loadeddata', function () {
       console.log('Video loaded, ready to play:', videoElement)
-      videoElement.play().then(() => {
-        console.log('Video playing')
-      }).catch(error => {
-        console.error('Video play error:', error)
-      })
 
       const videoMaterial = new Cesium.ImageMaterialProperty({
         image: videoElement,
