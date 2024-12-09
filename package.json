@@ -14,7 +14,8 @@
     "hls.js": "^1.5.17",
     "proj4": "^2.15.0",
     "vite-plugin-cesium": "^1.2.22",
-    "vue": "^3.3.11"
+    "vue": "^3.3.11",
+    "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.2",
