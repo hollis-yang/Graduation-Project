@@ -17,7 +17,7 @@ function goToRoute(route) {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .container {
   max-width: fit-content;
   margin-left: auto;
@@ -32,10 +32,10 @@ h3 {
   margin-bottom: 10px;
   font-weight: 500;
   text-decoration: underline;
-}
 
-h3:hover {
-  color: blue;
-  cursor: pointer;
+  &:hover {
+    color: blue;
+    cursor: pointer;
+  }
 }
 </style>

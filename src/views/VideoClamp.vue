@@ -24,7 +24,6 @@
 import { onMounted } from 'vue'
 import * as Cesium from 'cesium'
 import { getCameraProjection } from '@/utils/camera'
-import { ViewAnalysis } from '@/assets/ViewAnalysis'
 
 let viewer
 let videoElement
@@ -290,13 +289,6 @@ onMounted(() => {
       roll: 0
     }
   })
-
-  // var tilesets = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-  //   url: 'http://earthsdk.com/v/last/Apps/assets/dayanta/tileset.json'
-  // }));
-  // viewer.flyTo(tilesets)
-  
-  // ViewAnalysis.start(viewer)
   
 })
 </script>
