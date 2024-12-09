@@ -225,7 +225,7 @@ function toggleFrustum() {
 
 function addMask(position) {
   const maskImage = new Image()
-  maskImage.src = './video-mask.png' 
+  maskImage.src = './video-mask.png'
 
   maskImage.onload = function () {
     const canvas = document.createElement('canvas')
@@ -276,7 +276,7 @@ onMounted(() => {
     timeline: false,
     navigationHelpButton: false,
     navigationInstructionsInitiallyVisible: false,
-    terrainProvider: Cesium.createWorldTerrain() 
+    terrainProvider: Cesium.createWorldTerrain()
   })
   viewer._cesiumWidget._creditContainer.style.display = 'none'
   viewer.clock.shouldAnimate = true
@@ -291,13 +291,13 @@ onMounted(() => {
     }
   })
 
-  var tilesets = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-        url: 'http://earthsdk.com/v/last/Apps/assets/dayanta/tileset.json'
-      }));
-      viewer.flyTo(tilesets)
-
-  console.log(viewer.scene)
-  ViewAnalysis.start(viewer)
+  // var tilesets = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
+  //   url: 'http://earthsdk.com/v/last/Apps/assets/dayanta/tileset.json'
+  // }));
+  // viewer.flyTo(tilesets)
+  
+  // ViewAnalysis.start(viewer)
+  
 })
 </script>
 
