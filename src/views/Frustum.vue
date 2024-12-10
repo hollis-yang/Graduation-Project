@@ -34,6 +34,7 @@
       </div>
       <el-button @click="addFrustum">添加视锥体</el-button>
       <el-button @click="deleteFrustum">删除视锥体</el-button>
+      <!-- <el-button @click="getProjPolygon">获取融合范围</el-button> -->
     </div>
   </div>
 </template>
@@ -53,6 +54,8 @@ const projDistance = ref([0.01, 1000])
 
 // 存储视锥体的ID
 let frustumIds = []
+// 存储视锥线坐标
+let frustumLineCoords = []
 // 存储视锥体primitive
 let frustumPrimitive
 
@@ -63,6 +66,7 @@ function addLine(camPosition) {
   if (prevLine) {
     viewer.entities.remove(prevLine)
   }
+  frustumLineCoords = []
 
   // 提取参数
   const [lon, lat, additionalHeight] = camPosition.split(',').map(Number)
@@ -177,6 +181,24 @@ function addFrustum() {
     const id = `frustum_line_${i / 2}`
     frustumIds.push(id)
 
+    // 将 Cartesian3 转换为 Cartographic (经纬度和高程)
+    const startCartographic = Cesium.Cartographic.fromCartesian(start)
+    const endCartographic = Cesium.Cartographic.fromCartesian(end)
+
+    // 将弧度转换为度数
+    const startLongitude = Cesium.Math.toDegrees(startCartographic.longitude)
+    const startLatitude = Cesium.Math.toDegrees(startCartographic.latitude)
+    const startHeight = startCartographic.height
+
+    const endLongitude = Cesium.Math.toDegrees(endCartographic.longitude)
+    const endLatitude = Cesium.Math.toDegrees(endCartographic.latitude)
+    const endHeight = endCartographic.height
+
+    frustumLineCoords.push([
+      { longitude: startLongitude, latitude: startLatitude, height: startHeight },
+      { longitude: endLongitude, latitude: endLatitude, height: endHeight }
+    ])
+
     viewer.entities.add({
       id: id,
       polyline: {
@@ -187,7 +209,9 @@ function addFrustum() {
     })
   }
 
+  console.log(frustumLineCoords)
   viewer.zoomTo(viewer.entities)
+
 }
 
 // 删除视锥体
