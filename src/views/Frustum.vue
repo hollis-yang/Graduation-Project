@@ -32,6 +32,8 @@
         <span class="distance-slide">投射距离</span>
         <el-slider v-model="projDistance" range :max="1000" />
       </div>
+      <el-button @click="addFrustum">添加视锥体</el-button>
+      <el-button @click="deleteFrustum">删除视锥体</el-button>
     </div>
   </div>
 </template>
@@ -50,6 +52,9 @@ const pitchAngle = ref(-49.5)
 const horizontalAngle = ref(30)
 const verticalAngle = ref(30)
 const projDistance = ref([0, 1000])
+
+// 存储视锥体的ID
+let frustumIds = []
 
 // 添加线
 function addLine(camPosition) {
@@ -99,6 +104,88 @@ function addLine(camPosition) {
     })
     viewer.zoomTo(viewer.entities)
   })
+}
+
+// 添加视锥体
+function addFrustum() {
+  // 删除上一个视锥体
+  deleteFrustum()
+
+  const [lon, lat, additionalHeight] = camPosition.value.split(',').map(Number)
+
+  // 高度采样
+  const terrainProvider = viewer.terrainProvider
+  const startPosition = [Cesium.Cartographic.fromDegrees(lon, lat)]
+
+  Cesium.sampleTerrainMostDetailed(terrainProvider, startPosition).then((updatePosition) => {
+    const terrainHeight = updatePosition[0].height
+    const height = terrainHeight + additionalHeight
+
+    let near = 1
+    let far = 1000
+    const top = near * Math.tan(Cesium.Math.toRadians(verticalAngle.value) / 2)
+    const bottom = -top
+    const right = near * Math.tan(Cesium.Math.toRadians(horizontalAngle.value) / 2)
+    const left = -right
+
+    const frustum = new Cesium.PerspectiveFrustum({
+      fov: Cesium.Math.toRadians(verticalAngle.value),
+      aspectRatio: horizontalAngle.value / verticalAngle.value,
+      near,
+      far
+    })
+
+    const origin = Cesium.Cartesian3.fromDegrees(lon, lat, height)
+    const orientation = Cesium.Transforms.headingPitchRollQuaternion(
+      origin,
+      new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(headingAngle.value), Cesium.Math.toRadians(pitchAngle.value), 0)
+    )
+
+    const frustumOutline = new Cesium.FrustumOutlineGeometry({
+      frustum: frustum,
+      origin: origin,
+      orientation: orientation
+    })
+
+    const geometry = Cesium.FrustumOutlineGeometry.createGeometry(frustumOutline)
+    const positions = geometry.attributes.position.values
+    const indices = geometry.indices
+
+    // 计算每条线的顶点坐标并添加到地图中
+    for (let i = 0; i < indices.length; i += 2) {
+      const startIndex = indices[i] * 3
+      const endIndex = indices[i + 1] * 3
+
+      const start = new Cesium.Cartesian3(positions[startIndex], positions[startIndex + 1], positions[startIndex + 2])
+      const end = new Cesium.Cartesian3(positions[endIndex], positions[endIndex + 1], positions[endIndex + 2])
+
+      const id = `frustum_line_${i / 2}`
+      frustumIds.push(id)
+
+      viewer.entities.add({
+        id: id,
+        polyline: {
+          positions: [start, end],
+          width: 5,
+          material: Cesium.Color.RED
+        }
+      })
+    }
+
+    viewer.zoomTo(viewer.entities)
+  })
+}
+
+// 删除视锥体
+function deleteFrustum() {
+  frustumIds.forEach(id => {
+    const entity = viewer.entities.getById(id)
+    if (entity) {
+      viewer.entities.remove(entity)
+    }
+  })
+  // 清空ID列表
+  frustumIds = []
 }
 
 onMounted(() => {
