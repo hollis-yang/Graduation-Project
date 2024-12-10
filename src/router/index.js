@@ -19,6 +19,10 @@ const router = createRouter({
     {
       path: '/frustum',
       component: () => import('@/views/Frustum.vue')
+    },
+    {
+      path: '/modify-polygon',
+      component: () => import('@/views/ModifyPolygon.vue')
     }
   ]
 })
