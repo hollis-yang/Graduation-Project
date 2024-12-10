@@ -42,14 +42,16 @@
 import { onMounted, ref } from 'vue'
 import * as Cesium from 'cesium'
 import { getIntersectPoint } from '@/utils/frustum/interpolate'
+import { calAspectRatio } from '@/utils/frustum/fov'
 
 let viewer
 
-const camPosition = ref('117.205457,31.842984,63.9')
+const camPosition = ref('118.166,30.143,1800')
+// const camPosition = ref('117.205457,31.842984,63.9')
 const headingAngle = ref(88.5)
 const pitchAngle = ref(-49.5)
-const horizontalAngle = ref(46.3)
-const verticalAngle = ref(15.5)
+const horizontalAngle = ref(49)
+const verticalAngle = ref(23)
 const projDistance = ref([0.01, 1000])
 
 // 存储视锥体的ID
@@ -118,7 +120,7 @@ function addFrustum() {
    */
   const frustum = new Cesium.PerspectiveFrustum({
     fov: Cesium.Math.toRadians(horizontalAngle.value), // 水平视场角
-    aspectRatio: 1 / 2, // 宽高比
+    aspectRatio: calAspectRatio(horizontalAngle.value, verticalAngle.value), // 宽高比
     near: projDistance.value[0],
     far: projDistance.value[1]
   })
@@ -201,22 +203,29 @@ function addFrustum() {
     const startCartographic = Cesium.Cartographic.fromCartesian(start)
     const endCartographic = Cesium.Cartographic.fromCartesian(end)
 
-    // 只有当视锥线的高程一正一负时才添加到数组
-    if (startCartographic.height * endCartographic.height < 0) {
-      frustumLineCoords.push([
-        { longitude: Cesium.Math.toDegrees(startCartographic.longitude), latitude: Cesium.Math.toDegrees(startCartographic.latitude), height: startCartographic.height },
-        { longitude: Cesium.Math.toDegrees(endCartographic.longitude), latitude: Cesium.Math.toDegrees(endCartographic.latitude), height: endCartographic.height }
-      ])
-    }
+    frustumLineCoords.push([
+      { longitude: Cesium.Math.toDegrees(startCartographic.longitude), latitude: Cesium.Math.toDegrees(startCartographic.latitude), height: startCartographic.height },
+      { longitude: Cesium.Math.toDegrees(endCartographic.longitude), latitude: Cesium.Math.toDegrees(endCartographic.latitude), height: endCartographic.height },
+    ])
   }
 
-  console.log(frustumLineCoords)
+  // 计算每对坐标的高度差并存储在数组中
+  let coordsWithHeightDiff = frustumLineCoords.map(pair => {
+      let heightDiff = Math.abs(pair[0].height - pair[1].height)
+      return { pair, heightDiff }
+  })
+  // 按高度差从大到小排序
+  coordsWithHeightDiff.sort((a, b) => b.heightDiff - a.heightDiff)
+  // 选择高度差最大的前4对坐标
+  let top4Coords = coordsWithHeightDiff.slice(0, 4).map(item => item.pair)
+
+  console.log(top4Coords)
   viewer.zoomTo(viewer.entities)
 
   /**
    * 获取视锥线与地表交点
    */
-  frustumLineCoords.forEach(coord => {
+  top4Coords.forEach(coord => {
     getIntersectPoint(coord, viewer)
   })
 }
