@@ -2,9 +2,9 @@
   <div class="container">
     <h2>毕业设计Cesium demo</h2>
     <h3 @click="goToRoute('/video-clamp')">1. 播放视频并贴地</h3>
-    <h3 @click="goToRoute('/viewshed')">2. viewshed</h3>
-    <h3 @click="goToRoute('/frustum')">3. 视锥体</h3>
-    <h3 @click="goToRoute('/modify-polygon')">4. 投影范围手动编辑</h3>
+    <!-- <h3 @click="goToRoute('/viewshed')">2. viewshed</h3> -->
+    <h3 @click="goToRoute('/frustum')">2. 视锥体</h3>
+    <!-- <h3 @click="goToRoute('/modify-polygon')">4. 投影范围手动编辑</h3> -->
   </div>
 </template>
 
