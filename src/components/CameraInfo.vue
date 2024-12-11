@@ -15,9 +15,6 @@ import * as Cesium from 'cesium'
 
 const props = defineProps(['viewer'])
 
-// 确认 viewer 是否传递成功
-const viewerAvailable = ref(false)
-
 // 定义状态栏数据
 const longitude = ref(0)
 const latitude = ref(0)
@@ -61,7 +58,6 @@ const updateMousePosition = (movement) => {
 // 初始化状态栏
 onMounted(() => {
   if (props.viewer) {
-    viewerAvailable.value = true
     // 添加事件监听器
     props.viewer.camera.changed.addEventListener(updateStatusBar)
     props.viewer.screenSpaceEventHandler.setInputAction(updateMousePosition, Cesium.ScreenSpaceEventType.MOUSE_MOVE)

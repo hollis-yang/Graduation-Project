@@ -23,6 +23,10 @@ const router = createRouter({
     {
       path: '/modify-polygon',
       component: () => import('@/views/ModifyPolygon.vue')
+    },
+    {
+      path: '/viewshed-shadowmap',
+      component: () => import('@/views/ViewShedShadowMap.vue')
     }
   ]
 })

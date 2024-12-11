@@ -51,8 +51,8 @@ import CameraInfo from '@/components/CameraInfo.vue'
 let viewer
 let viewerReady = ref(false)
 
-const camPosition = ref('118.166,30.143,1800')
-// const camPosition = ref('117.205457,31.842984,63.9')
+// const camPosition = ref('118.166,30.143,1800')
+const camPosition = ref('117.205457,31.842984,63.9')
 const headingAngle = ref(88.5)
 const pitchAngle = ref(-49.5)
 const horizontalAngle = ref(49)
