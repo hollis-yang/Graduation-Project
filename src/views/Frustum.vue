@@ -36,6 +36,9 @@
       <el-button @click="deleteFrustum">删除视锥体</el-button>
     </div>
   </div>
+  <div class="camera-info" v-if="viewerReady">
+    <CameraInfo :viewer="viewer"></CameraInfo>
+  </div>
 </template>
 
 <script setup>
@@ -43,8 +46,10 @@ import { onMounted, ref } from 'vue'
 import * as Cesium from 'cesium'
 import { getIntersectPoint } from '@/utils/frustum/interpolate'
 import { calAspectRatio } from '@/utils/frustum/fov'
+import CameraInfo from '@/components/CameraInfo.vue'
 
 let viewer
+let viewerReady = ref(false)
 
 const camPosition = ref('118.166,30.143,1800')
 // const camPosition = ref('117.205457,31.842984,63.9')
@@ -271,6 +276,8 @@ onMounted(() => {
   viewer.clock.shouldAnimate = true
   viewer.scene.globe.depthTestAgainstTerrain = true
 
+  viewerReady.value = true
+
   viewer.camera.setView({
     destination: Cesium.Cartesian3.fromDegrees(117.205457, 31.842984, 200),
     orientation: {
@@ -310,5 +317,13 @@ onMounted(() => {
       margin-bottom: 10px;
     }
   }
+}
+
+.camera-info {
+  position: absolute;
+  bottom: 0%;
+  width: 100%;
+  height: 3.5%;
+  background-color: rgba(255, 255, 255, 0.6);
 }
 </style>
