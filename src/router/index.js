@@ -27,6 +27,10 @@ const router = createRouter({
     {
       path: '/viewshed-shadowmap',
       component: () => import('@/views/ViewShedShadowMap.vue')
+    },
+    {
+      path: '/video-shadowmap',
+      component: () => import('@/views/VideoShadowMap.vue')
     }
   ]
 })
