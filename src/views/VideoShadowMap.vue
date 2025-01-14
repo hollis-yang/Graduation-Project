@@ -6,11 +6,12 @@
 import { onMounted } from 'vue'
 import * as Cesium from 'cesium'
 import Hls from 'hls.js'
+import * as dat from 'dat.gui'
 
 onMounted(() => {
   Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0MGMyMWM0YS1lNDEyLTRjNWYtYTY3OS1jOTZkOWM1OThjYTEiLCJpZCI6MTkxMTMxLCJpYXQiOjE3MDU5MDY1ODN9.Tq3eObtuZJiqt4rDl-srQkMfz-WP9_EvKEPa_UvOI5s'
 
-  // Initialize the Cesium Viewer
+  // Cesium Viewer
   const viewer = new Cesium.Viewer('cesiumContainer', {
     animation: false,
     baseLayerPicker: false,
@@ -19,61 +20,69 @@ onMounted(() => {
     geocoder: false,
     homeButton: false,
     infoBox: false,
-    sceneModePicker: true,
+    sceneModePicker: false,
     selectionIndicator: false,
     timeline: false,
     navigationHelpButton: false,
     navigationInstructionsInitiallyVisible: false,
     terrainProvider: Cesium.createWorldTerrain()
-  });
+  })
   viewer._cesiumWidget._creditContainer.style.display = 'none'
   viewer.clock.shouldAnimate = true
   viewer.scene.globe.depthTestAgainstTerrain = true
 
-  let p = [118.166,30.143,1800];
-  p = Cesium.Cartesian3.fromDegrees(p[0], p[1], p[2]);
-  let camera = new Cesium.Camera(viewer.scene);
+  let p = [118.166,30.143,1800]  // 探头坐标xyz
+  p = Cesium.Cartesian3.fromDegrees(p[0], p[1], p[2])
+  let position = {
+    heading: 88.5,
+    pitch: -49.5,
+    roll: 0,
+    fov: 46.3,
+    aspectRatio: 2/1,
+    distance: 1000
+  }  // 探头姿态
 
-  viewer.camera.flyTo({
+  let camera = new Cesium.Camera(viewer.scene)
+  camera.flyTo({
     destination: p,
     orientation: {
-      heading: Cesium.Math.toRadians(88.5-90),
-      pitch: Cesium.Math.toRadians(-49.5-90),
-      roll: 0
+      heading: Cesium.Math.toRadians(position.heading-90),
+      pitch: Cesium.Math.toRadians(position.pitch-90),
+      roll: Cesium.Math.toRadians(position.roll)
     },
     duration: 3
-  });
+  })
 
   camera.setView({
     destination: p,
     orientation: {
-      heading: Cesium.Math.toRadians(88.5-90),
-      pitch: Cesium.Math.toRadians(-49.5-90),
-      roll: 0
+      heading: Cesium.Math.toRadians(position.heading-90),
+      pitch: Cesium.Math.toRadians(position.pitch-90),
+      roll: Cesium.Math.toRadians(position.roll)
     }
-  });
+  })
 
   camera.frustum = new Cesium.PerspectiveFrustum({
-    fov: Cesium.Math.toRadians(46.3),
-    aspectRatio: 2/1,
+    fov: Cesium.Math.toRadians(position.fov),
+    aspectRatio: position.aspectRatio,
     near: 0.01,
-    far: 1000
-  });
+    far: position.distance
+  })
 
   let cameraPrimitive = new Cesium.DebugCameraPrimitive({
     camera: camera,
     color: Cesium.Color.RED,
     show: true,
-  });
-  viewer.scene.primitives.add(cameraPrimitive);
+  })
+  viewer.scene.primitives.add(cameraPrimitive)
 
   class CustomPrimitive {
     constructor() {}
     isDestroyed() {
-      return false;
+      return false
     }
     update(frameState) {
-      frameState.shadowMaps.push(shadowMap);
+      frameState.shadowMaps.push(shadowMap)
     }
   }
 
@@ -85,16 +94,43 @@ onMounted(() => {
     cascadesEnabled: false,
   })
 
-  let primitive = new CustomPrimitive();
-  viewer.scene.primitives.add(primitive);
+  let primitive = new CustomPrimitive()
+  viewer.scene.primitives.add(primitive)
+
+  // 相机调整gui
+  const gui = new dat.GUI()
+  gui.add(position, 'heading', 0, 360, 0.1).onChange(e => updateGUI())
+  gui.add(position, 'pitch', -180, 180, 0.1).onChange(e => updateGUI())
+  gui.add(position, 'roll', -180, 180, 0.1).onChange(e => updateGUI())
+  gui.add(position, 'fov', 1, 90, 0.1).onChange(e => updateGUI())
+  gui.add(position, 'aspectRatio', 0.1, 5, 0.1).onChange(e => updateGUI())
+  gui.add(position, 'distance', 1, 2000, 1).onChange(e => updateGUI())
+  
+  function updateGUI() {
+    camera.setView({
+      destination: p,
+      orientation: {
+        heading: Cesium.Math.toRadians(position.heading-90),
+        pitch: Cesium.Math.toRadians(position.pitch-90),
+        roll: Cesium.Math.toRadians(position.roll)
+      }
+    })
+
+    camera.frustum = new Cesium.PerspectiveFrustum({
+      fov: Cesium.Math.toRadians(position.fov),
+      aspectRatio: position.aspectRatio,
+      near: 0.01,
+      far: position.distance
+    })
+  }
 
   // 创建视频元素
-  let videoEle = document.createElement("video");
-  videoEle.setAttribute("muted", true);
-  videoEle.setAttribute("loop", true);
-  videoEle.setAttribute("autoplay", true);
-  document.body.appendChild(videoEle);
-  // videoEle.setAttribute("src", "/lukou.mp4");
+  let videoEle = document.createElement("video")
+  videoEle.setAttribute("muted", true)
+  videoEle.setAttribute("loop", true)
+  videoEle.setAttribute("autoplay", true)
+  document.body.appendChild(videoEle)
+  // videoEle.setAttribute("src", "/lukou.mp4")
   videoEle.style.cssText = "position:absolute;left:0px;top:0px;width:320px;height:240px;display:none";
 
   if (Hls.isSupported()) {
@@ -186,7 +222,7 @@ onMounted(() => {
         vec4 videoColor = texture2D(videoTexture, rotatedCoords);
         gl_FragColor = vec4(videoColor.xyz, 1.);
       } 
-    }`;
+    }`
 
     // 创建视频纹理
     let videoTexture = new Cesium.Texture({
@@ -194,18 +230,18 @@ onMounted(() => {
       source: videoEle,
       pixelFormat: Cesium.PixelFormat.RGBA,
       pixelDatatype: Cesium.PixelDatatype.UNSIGNED_BYTE
-    });
+    })
 
     // 定时更新视频纹理
     function updateVideoTexture() {
       if (videoEle.readyState >= videoEle.HAVE_CURRENT_DATA) {
         videoTexture.copyFrom({
           source: videoEle
-        });
+        })
       }
-      requestAnimationFrame(updateVideoTexture);
+      requestAnimationFrame(updateVideoTexture)
     }
-    updateVideoTexture();
+    updateVideoTexture()
 
     let uniforms = {
       videoTexture: videoTexture,
@@ -216,13 +252,13 @@ onMounted(() => {
         const texelStepSize = new Cesium.Cartesian2(
           1.0 / shadowMap._textureSize.x,
           1.0 / shadowMap._textureSize.y
-        );
+        )
         return new Cesium.Cartesian4(
           texelStepSize.x,
           texelStepSize.y,
           shadowMap._primitiveBias.depthBias,
           shadowMap._primitiveBias.normalShadingSmooth
-        );
+        )
       },
       shadowMap_normalOffsetScaleDistanceMaxDistanceAndDarkness: () => {
         return new Cesium.Cartesian4(
@@ -230,18 +266,18 @@ onMounted(() => {
           shadowMap._distance,
           shadowMap.maximumDistance,
           shadowMap._darkness
-        );
+        )
       }
-    };
+    }
 
     let postProcessStage = new Cesium.PostProcessStage({
       fragmentShader: fragmentShader,
       uniforms: uniforms
-    });
+    })
 
     viewer.scene.postProcessStages.add(postProcessStage);
-  });
-});
+  })
+})
 </script>
 
 <style scoped lang="scss">
