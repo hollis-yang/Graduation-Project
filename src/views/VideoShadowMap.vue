@@ -42,11 +42,8 @@ onMounted(() => {
   // viewer.imageryLayers.addImageryProvider(jilin2023Layer)
 
 
-  
 
-
-
-  let p = [110.305029,37.826932,1200]  // 探头坐标xyz
+  let p = [110.305029,37.826932,1150]  // 探头坐标xyz
   // // 地形采样
   // let p_cartographic = Cesium.Cartographic.fromDegrees(p[0], p[1])
   // Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, [p_cartographic]).then((updatedPositions) => {
@@ -64,11 +61,11 @@ onMounted(() => {
   })
   
   let position = {
-    heading: 107.6,
-    pitch: -64.5,
+    heading: 106.9,
+    pitch: -72.3,
     roll: 0,
-    fov: 31.5,
-    aspectRatio: 4/3,
+    fov: 28.9,
+    aspectRatio: 2.1,
     distance: 1000,
     frustumShow: true
   }  // 探头姿态
@@ -261,7 +258,10 @@ onMounted(() => {
       vec4 videoColor = texture2D(videoTexture, rotatedCoords);
 
       // 默认混合视频纹理和场景颜色
-      vec4 finalColor = mix(color, vec4(videoColor.xyz, 1.0), videoColor.a);
+      // vec4 finalColor = mix(color, vec4(videoColor.xyz, 1.0), videoColor.a);
+      // 视频透明度
+      float videoOpacity = 0.9;
+      vec4 finalColor = mix(color, vec4(videoColor.xyz, videoOpacity), videoOpacity);
 
       // 添加羽化效果
       if (shadowPosition.x > 0.95) {
@@ -280,7 +280,7 @@ onMounted(() => {
       // 输出最终颜色
       gl_FragColor = finalColor;
     } 
-  }`
+    }`
 
 
     // 创建视频纹理
