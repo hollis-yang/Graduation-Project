@@ -30,14 +30,15 @@ onMounted(() => {
   viewer.clock.shouldAnimate = true
   viewer.scene.globe.depthTestAgainstTerrain = true
 
-  let p = [118.166,30.143,1800];
+  // let p = [118.166,30.143,1700];
+  let p = [117.204457, 31.842484, 53.9];
   p = Cesium.Cartesian3.fromDegrees(p[0], p[1], p[2]);
   let camera = new Cesium.Camera(viewer.scene);
 
   viewer.camera.flyTo({
     destination: p,
     orientation: {
-      heading: Cesium.Math.toRadians(88.5-90),
+      heading: Cesium.Math.toRadians(30-90),
       pitch: Cesium.Math.toRadians(-49.5-90),
       roll: 0
     },
@@ -47,17 +48,17 @@ onMounted(() => {
   camera.setView({
     destination: p,
     orientation: {
-      heading: Cesium.Math.toRadians(88.5-90),
-      pitch: Cesium.Math.toRadians(-49.5-90),
+      heading: Cesium.Math.toRadians(64-90),
+      pitch: Cesium.Math.toRadians(-45.5-90),
       roll: 0
     }
   });
 
   camera.frustum = new Cesium.PerspectiveFrustum({
-    fov: Cesium.Math.toRadians(46.3),
-    aspectRatio: 2/1,
+    fov: Cesium.Math.toRadians(60),
+    aspectRatio: 4/3,
     near: 0.01,
-    far: 1000
+    far: 5000
   });
 
   let cameraPrimitive = new Cesium.DebugCameraPrimitive({
@@ -94,32 +95,32 @@ onMounted(() => {
   videoEle.setAttribute("loop", true);
   videoEle.setAttribute("autoplay", true);
   document.body.appendChild(videoEle);
-  // videoEle.setAttribute("src", "/lukou.mp4");
+  videoEle.setAttribute("src", "/lukou.mp4");
   videoEle.style.cssText = "position:absolute;left:0px;top:0px;width:320px;height:240px;display:none";
 
-  if (Hls.isSupported()) {
-    const hls = new Hls()
-    hls.loadSource('http://hls01open.ys7.com/openlive/50c94278dd444de194c8f9251b4db27e.m3u8')
-    hls.attachMedia(videoEle)
-    hls.on(Hls.Events.MANIFEST_PARSED, function () {
-      videoEle.play().then(() => {
-        console.log('Video playing')
-      }).catch(error => {
-        console.error('Video play error:', error)
-      })
-    })
-  } else if (videoEle.canPlayType('application/vnd.apple.mpegurl')) {
-    videoEle.src = 'http://hls01open.ys7.com/openlive/50c94278dd444de194c8f9251b4db27e.m3u8'
-    videoEle.addEventListener('loadedmetadata', function () {
-      videoEle.play().then(() => {
-        console.log('Video playing')
-      }).catch(error => {
-        console.error('Video play error:', error)
-      })
-    })
-  } else {
-    console.error('HLS.js is not supported in this browser.')
-  }
+  // if (Hls.isSupported()) {
+  //   const hls = new Hls()
+  //   hls.loadSource('http://hls01open.ys7.com/openlive/50c94278dd444de194c8f9251b4db27e.m3u8')
+  //   hls.attachMedia(videoEle)
+  //   hls.on(Hls.Events.MANIFEST_PARSED, function () {
+  //     videoEle.play().then(() => {
+  //       console.log('Video playing')
+  //     }).catch(error => {
+  //       console.error('Video play error:', error)
+  //     })
+  //   })
+  // } else if (videoEle.canPlayType('application/vnd.apple.mpegurl')) {
+  //   videoEle.src = 'http://hls01open.ys7.com/openlive/50c94278dd444de194c8f9251b4db27e.m3u8'
+  //   videoEle.addEventListener('loadedmetadata', function () {
+  //     videoEle.play().then(() => {
+  //       console.log('Video playing')
+  //     }).catch(error => {
+  //       console.error('Video play error:', error)
+  //     })
+  //   })
+  // } else {
+  //   console.error('HLS.js is not supported in this browser.')
+  // }
 
   // 等待视频加载完数据
   videoEle.addEventListener('loadeddata', () => {
@@ -243,6 +244,11 @@ onMounted(() => {
   });
 });
 </script>
+
+
+
+
+
 
 <style scoped lang="scss">
 #cesiumContainer {
