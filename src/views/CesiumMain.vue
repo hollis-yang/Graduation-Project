@@ -6,7 +6,6 @@
     <h3 @click="goToRoute('/viewshed')">2-1. viewshed</h3>
     <h3 @click="goToRoute('/viewshed-shadowmap')">2-2. 基于ShadowMap的viewshed实现</h3>
     <h3 @click="goToRoute('/frustum')">3. 视锥体</h3>
-    <h3 @click="goToRoute('/modify-polygon')">4. 投影范围手动编辑</h3>
   </div>
 </template>
 

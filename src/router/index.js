@@ -21,10 +21,6 @@ const router = createRouter({
       component: () => import('@/views/Frustum.vue')
     },
     {
-      path: '/modify-polygon',
-      component: () => import('@/views/ModifyPolygon.vue')
-    },
-    {
       path: '/viewshed-shadowmap',
       component: () => import('@/views/ViewShedShadowMap.vue')
     },

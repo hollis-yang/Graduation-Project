@@ -39,7 +39,8 @@ onMounted(() => {
     roll: 0,
     fov: 46.3,
     aspectRatio: 2/1,
-    distance: 1000
+    distance: 1000,
+    frustumShow: true
   }  // 探头姿态
 
   let camera = new Cesium.Camera(viewer.scene)
@@ -105,6 +106,9 @@ onMounted(() => {
   gui.add(position, 'fov', 1, 90, 0.1).onChange(e => updateGUI())
   gui.add(position, 'aspectRatio', 0.1, 5, 0.1).onChange(e => updateGUI())
   gui.add(position, 'distance', 1, 2000, 1).onChange(e => updateGUI())
+  gui.add(position, 'frustumShow').onChange(e => {
+    cameraPrimitive.show = position.frustumShow
+  })
   
   function updateGUI() {
     camera.setView({
