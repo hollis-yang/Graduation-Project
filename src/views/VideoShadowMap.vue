@@ -186,47 +186,72 @@ onMounted(() => {
       return visibility;
     }
 
-    void main() { 
-      vec4 color = texture2D(colorTexture, v_textureCoordinates);
-      gl_FragColor = texture2D(colorTexture, v_textureCoordinates);  
-      float depth = czm_unpackDepth(texture2D(depthTexture, v_textureCoordinates)); 
-      if (depth >= 1.0) { 
-        return; 
-      }  
+  void main() { 
+    vec4 color = texture2D(colorTexture, v_textureCoordinates); // 获取场景颜色
+    gl_FragColor = texture2D(colorTexture, v_textureCoordinates);  
+    float depth = czm_unpackDepth(texture2D(depthTexture, v_textureCoordinates)); 
+    if (depth >= 1.0) { 
+      return; 
+    }  
 
-      // 当前像素的坐标（相机坐标系）
-      vec4 eyeCoordinate4 = czm_windowToEyeCoordinates(gl_FragCoord.xy, depth);  
-      vec4 positionEC = eyeCoordinate4 / eyeCoordinate4.w;
+    // 当前像素的坐标（相机坐标系）
+    vec4 eyeCoordinate4 = czm_windowToEyeCoordinates(gl_FragCoord.xy, depth);  
+    vec4 positionEC = eyeCoordinate4 / eyeCoordinate4.w;
 
-      // 开始 
-      vec3 normalEC = vec3(1.);
-      czm_shadowParameters shadowParameters; 
-      shadowParameters.texelStepSize = shadowMap_texelSizeDepthBiasAndNormalShadingSmooth.xy; 
-      shadowParameters.depthBias = shadowMap_texelSizeDepthBiasAndNormalShadingSmooth.z; 
-      shadowParameters.normalShadingSmooth = shadowMap_texelSizeDepthBiasAndNormalShadingSmooth.w; 
-      shadowParameters.darkness = shadowMap_normalOffsetScaleDistanceMaxDistanceAndDarkness.w;
-      shadowParameters.depthBias *= max(depth * .01, 1.);
-      vec3 directionEC = normalize(positionEC.xyz - shadowMap_lightPositionEC.xyz); 
-      float nDotL = clamp(dot(normalEC, -directionEC), 0.0, 1.0); 
+    // 设置基本阴影参数
+    vec3 normalEC = vec3(1.);
+    czm_shadowParameters shadowParameters; 
+    shadowParameters.texelStepSize = shadowMap_texelSizeDepthBiasAndNormalShadingSmooth.xy; 
+    shadowParameters.depthBias = shadowMap_texelSizeDepthBiasAndNormalShadingSmooth.z; 
+    shadowParameters.normalShadingSmooth = shadowMap_texelSizeDepthBiasAndNormalShadingSmooth.w; 
+    shadowParameters.darkness = shadowMap_normalOffsetScaleDistanceMaxDistanceAndDarkness.w;
+    shadowParameters.depthBias *= max(depth * .01, 1.);
 
-      vec4 shadowPosition = shadowMap_matrix * positionEC; 
-      shadowPosition /= shadowPosition.w; 
+    // 计算光照和阴影坐标
+    vec3 directionEC = normalize(positionEC.xyz - shadowMap_lightPositionEC.xyz); 
+    float nDotL = clamp(dot(normalEC, -directionEC), 0.0, 1.0); 
 
-      if (any(lessThan(shadowPosition.xyz, vec3(0.0))) || any(greaterThan(shadowPosition.xyz, vec3(1.0)))) { 
-        return; 
-      } 
+    vec4 shadowPosition = shadowMap_matrix * positionEC; 
+    shadowPosition /= shadowPosition.w; 
 
-      shadowParameters.texCoords = shadowPosition.xy; 
-      shadowParameters.depth = shadowPosition.z; 
-      shadowParameters.nDotL = nDotL; 
-      float visibility = _czm_shadowVisibility(shadowMap_texture, shadowParameters);  
+    // 判断是否超出阴影贴图范围
+    if (any(lessThan(shadowPosition.xyz, vec3(0.0))) || any(greaterThan(shadowPosition.xyz, vec3(1.0)))) { 
+      return; 
+    } 
 
-      if (visibility == 1.0) {
-        vec2 rotatedCoords = vec2(1.0 - shadowPosition.x, 1.0 - shadowPosition.y);
-        vec4 videoColor = texture2D(videoTexture, rotatedCoords);
-        gl_FragColor = vec4(videoColor.xyz, 1.);
-      } 
-    }`
+    // 设置阴影参数
+    shadowParameters.texCoords = shadowPosition.xy; 
+    shadowParameters.depth = shadowPosition.z; 
+    shadowParameters.nDotL = nDotL; 
+    float visibility = _czm_shadowVisibility(shadowMap_texture, shadowParameters);  
+
+    if (visibility == 1.0) {
+      // 如果像素未被阴影遮挡，则应用视频纹理
+      vec2 rotatedCoords = vec2(1.0 - shadowPosition.x, 1.0 - shadowPosition.y);
+      vec4 videoColor = texture2D(videoTexture, rotatedCoords);
+
+      // 默认混合视频纹理和场景颜色
+      vec4 finalColor = mix(color, vec4(videoColor.xyz, 1.0), videoColor.a);
+
+      // 添加羽化效果
+      if (shadowPosition.x > 0.95) {
+        finalColor = mix(color, vec4(videoColor.xyz, 1.0), (1.0 - shadowPosition.x) * 20.0);
+      }
+      if (shadowPosition.x < 0.05) {
+        finalColor = mix(color, vec4(videoColor.xyz, 1.0), shadowPosition.x * 20.0);
+      }
+      if (shadowPosition.y > 0.95) {
+        finalColor = mix(color, vec4(videoColor.xyz, 1.0), (1.0 - shadowPosition.y) * 20.0);
+      }
+      if (shadowPosition.y < 0.05) {
+        finalColor = mix(color, vec4(videoColor.xyz, 1.0), shadowPosition.y * 20.0);
+      }
+
+      // 输出最终颜色
+      gl_FragColor = finalColor;
+    } 
+  }`
+
 
     // 创建视频纹理
     let videoTexture = new Cesium.Texture({
