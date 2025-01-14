@@ -17,10 +17,6 @@ const router = createRouter({
       component: () => import('@/views/Viewshed.vue')
     },
     {
-      path: '/frustum',
-      component: () => import('@/views/Frustum.vue')
-    },
-    {
       path: '/viewshed-shadowmap',
       component: () => import('@/views/ViewShedShadowMap.vue')
     },

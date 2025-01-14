@@ -31,8 +31,38 @@ onMounted(() => {
   viewer.clock.shouldAnimate = true
   viewer.scene.globe.depthTestAgainstTerrain = true
 
+  /**
+   * 影像图层与地形图层
+   */
+  // 吉林一号
+  const jilin2023Layer = new Cesium.UrlTemplateImageryProvider({
+    url: 'https://api.jl1mall.com/getMap/{z}/{x}/{reverseY}?mk=73ad26c4aa6957eef051ecc5a15308b4&tk=8c7cc72e35c8f91255a07175a328b3b2'
+  })
+
+  // viewer.imageryLayers.addImageryProvider(jilin2023Layer)
+
+
+  
+
+
+
   let p = [118.166,30.143,1800]  // 探头坐标xyz
+  // // 地形采样
+  // let p_cartographic = Cesium.Cartographic.fromDegrees(p[0], p[1])
+  // Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, [p_cartographic]).then((updatedPositions) => {
+  //   const terrainHeight = updatedPositions[0].height  // 地形高度
+  //   p[2] = terrainHeight + p[2]
+  // })
+
   p = Cesium.Cartesian3.fromDegrees(p[0], p[1], p[2])
+  viewer.entities.add({
+    position: p,
+    point: {
+      pixelSize: 10,
+      color: Cesium.Color.RED
+    }
+  })
+  
   let position = {
     heading: 88.5,
     pitch: -49.5,
