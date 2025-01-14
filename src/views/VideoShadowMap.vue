@@ -46,7 +46,7 @@ onMounted(() => {
 
 
 
-  let p = [118.166,30.143,1800]  // 探头坐标xyz
+  let p = [110.305029,37.826932,1200]  // 探头坐标xyz
   // // 地形采样
   // let p_cartographic = Cesium.Cartographic.fromDegrees(p[0], p[1])
   // Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, [p_cartographic]).then((updatedPositions) => {
@@ -64,11 +64,11 @@ onMounted(() => {
   })
   
   let position = {
-    heading: 88.5,
-    pitch: -49.5,
+    heading: 107.6,
+    pitch: -64.5,
     roll: 0,
-    fov: 46.3,
-    aspectRatio: 2/1,
+    fov: 31.5,
+    aspectRatio: 4/3,
     distance: 1000,
     frustumShow: true
   }  // 探头姿态
