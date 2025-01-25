@@ -55,10 +55,19 @@ onMounted(() => {
   // 视频加载完成后创建 3D 视频对象
   videoEle.addEventListener('loadeddata', () => {
     let p = [121.11124, 31.14121, 100.49794]
+    let stanceOption = {
+      heading: 106.9,
+      pitch: -72.3,
+      roll: 0,
+      fov: 28.9,
+      aspectRatio: 2.1,
+      distance: 1000,
+      frustumShow: true
+    }  // 探头姿态
     let p1 = Cesium.Cartesian3.fromDegrees(p[0] - 0.001, p[1], p[2])
-    createVideo3D(p1, viewer, videoEle)
+    createVideo3D(p1, viewer, videoEle, stanceOption)
     let p2 = Cesium.Cartesian3.fromDegrees(p[0] + 0.001, p[1], p[2])
-    createVideo3D(p2, viewer, videoEle)
+    createVideo3D(p2, viewer, videoEle, stanceOption)
   })
 
   // 飞到指定位置

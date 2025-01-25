@@ -1,8 +1,8 @@
 import * as Cesium from 'cesium'
 
 class CustomPrimitive {
-  constructor(position, viewer) {
-    this.shadowMap = createShadowMap(position, viewer)
+  constructor(position, viewer, stanceOption) {
+    this.shadowMap = createShadowMap(position, viewer, stanceOption)
   }
 
   isDestroyed() {
@@ -14,28 +14,28 @@ class CustomPrimitive {
   }
 }
 
-function createShadowMap(position, viewer) {
+function createShadowMap(position, viewer, stanceOption) {
   // 创建一个相机
   let camera = new Cesium.Camera(viewer.scene)
   // 设置相机的视角（方向）
   camera.setView({
     destination: position,
     orientation: {
-      heading: Cesium.Math.toRadians(0),
-      pitch: Cesium.Math.toRadians(-50),
-      roll: 0,
+      heading: Cesium.Math.toRadians(stanceOption.heading-90),
+      pitch: Cesium.Math.toRadians(stanceOption.pitch-90),
+      roll: Cesium.Math.toRadians(stanceOption.roll),
     },
   })
   camera.frustum = new Cesium.PerspectiveFrustum({
-    fov: Cesium.Math.toRadians(50),
-    aspectRatio: 1,
-    near: 1,
-    far: 200,
+    fov: Cesium.Math.toRadians(stanceOption.fov),
+    aspectRatio: stanceOption.aspectRatio,
+    near: 0.01,
+    far: stanceOption.distance,
   })
   let cameraPrimitive = new Cesium.DebugCameraPrimitive({
     camera: camera,
     color: Cesium.Color.RED,
-    show: true,
+    show: stanceOption.frustumShow,
   })
   viewer.scene.primitives.add(cameraPrimitive)
   viewer.entities.add({
@@ -56,8 +56,8 @@ function createShadowMap(position, viewer) {
   return shadowMap
 }
 
-export function createVideo3D(position, viewer, videoEle) {
-  let primitive = new CustomPrimitive(position, viewer)
+export function createVideo3D(position, viewer, videoEle, stanceOption) {
+  let primitive = new CustomPrimitive(position, viewer, stanceOption)
   viewer.scene.primitives.add(primitive)
   const shadowMap = primitive.shadowMap
 
