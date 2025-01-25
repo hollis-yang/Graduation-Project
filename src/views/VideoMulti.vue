@@ -5,10 +5,8 @@
 <script setup>
 import { onMounted } from 'vue'
 import * as Cesium from 'cesium'
-import mitt from 'mitt'
 import { createVideo3D } from '@/utils/addMultiVideo'
 
-const eventBus = mitt()
 let viewer = null
 
 onMounted(() => {
@@ -45,11 +43,6 @@ onMounted(() => {
   })
   viewer.imageryLayers.addImageryProvider(tdtAnnoLayer)
 
-  eventBus.emit('viewer-ready', viewer)
-})
-
-// 监听 viewer-ready 事件
-eventBus.on('viewer-ready', (viewer) => {
   // 创建视频元素
   let videoEle = document.createElement('video')
   videoEle.setAttribute('muted', true)
