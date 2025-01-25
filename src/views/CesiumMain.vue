@@ -3,6 +3,7 @@
     <h2>毕业设计Cesium demo</h2>
     <h3 @click="goToRoute('/video-clamp')">1-1. 播放视频并贴地</h3>
     <h3 @click="goToRoute('/video-shadowmap')">1-2. 基于ShadowMap的视频流播放</h3>
+    <h3 @click="goToRoute('/video-multi')">1-3. 多路视频流播放</h3>
     <h3 @click="goToRoute('/viewshed')">2-1. viewshed</h3>
     <h3 @click="goToRoute('/viewshed-shadowmap')">2-2. 基于ShadowMap的viewshed实现</h3>
     <h3 @click="goToRoute('/frustum')">3. 视锥体</h3>

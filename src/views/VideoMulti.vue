@@ -47,7 +47,7 @@ onMounted(() => {
     tileMatrixSetID: 'GoogleMapsCompatible',
     show: false,
   })
-  viewer.imageryLayers.addImageryProvider(jilin2023Layer)
+  // viewer.imageryLayers.addImageryProvider(jilin2023Layer)
   viewer.imageryLayers.addImageryProvider(tdtAnnoLayer)
 
 

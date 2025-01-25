@@ -13,6 +13,10 @@ const router = createRouter({
       component: () => import('@/views/VideoClamp.vue')
     },
     {
+      path: '/video-multi',
+      component: () => import('@/views/VideoMulti.vue')
+    },
+    {
       path: '/viewshed',
       component: () => import('@/views/Viewshed.vue')
     },
