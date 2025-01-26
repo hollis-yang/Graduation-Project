@@ -35,18 +35,20 @@ function createShadowMap(position, viewer, cameraID, stanceOption) {
   let cameraPrimitive = new Cesium.DebugCameraPrimitive({
     camera: camera,
     color: Cesium.Color.RED,
-    show: stanceOption.frustumShow,
+    show: false,
   })
   // 绑定唯一的id用于pick拾取信息
   cameraPrimitive.id = cameraID
 
   viewer.scene.primitives.add(cameraPrimitive)
   viewer.entities.add({
+    id: `camera-position-${cameraID}`,
     position: position,
     point: {
       pixelSize: 10,
       color: Cesium.Color.RED,
     },
+    show: false,
   })
   let shadowMap = new Cesium.ShadowMap({
     lightCamera: camera,
