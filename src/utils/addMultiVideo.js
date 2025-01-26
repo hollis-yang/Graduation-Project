@@ -1,8 +1,8 @@
 import * as Cesium from 'cesium'
 
 class CustomPrimitive {
-  constructor(position, viewer, stanceOption) {
-    this.shadowMap = createShadowMap(position, viewer, stanceOption)
+  constructor(position, viewer, cameraID, stanceOption) {
+    this.shadowMap = createShadowMap(position, viewer, cameraID, stanceOption)
   }
 
   isDestroyed() {
@@ -14,7 +14,7 @@ class CustomPrimitive {
   }
 }
 
-function createShadowMap(position, viewer, stanceOption) {
+function createShadowMap(position, viewer, cameraID, stanceOption) {
   // 创建一个相机
   let camera = new Cesium.Camera(viewer.scene)
   // 设置相机的视角（方向）
@@ -37,6 +37,9 @@ function createShadowMap(position, viewer, stanceOption) {
     color: Cesium.Color.RED,
     show: stanceOption.frustumShow,
   })
+  // 绑定唯一的id用于pick拾取信息
+  cameraPrimitive.id = cameraID
+
   viewer.scene.primitives.add(cameraPrimitive)
   viewer.entities.add({
     position: position,
@@ -56,8 +59,8 @@ function createShadowMap(position, viewer, stanceOption) {
   return shadowMap
 }
 
-export function createVideo3D(position, viewer, videoEle, stanceOption) {
-  let primitive = new CustomPrimitive(position, viewer, stanceOption)
+export function createVideo3D(position, viewer, videoEle, cameraID, stanceOption) {
+  let primitive = new CustomPrimitive(position, viewer, cameraID, stanceOption)
   viewer.scene.primitives.add(primitive)
   const shadowMap = primitive.shadowMap
 
