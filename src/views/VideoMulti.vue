@@ -30,6 +30,11 @@
           :step="value[2]"
           class="slider"></el-slider>
       </div>
+      <!-- 复原与确认按钮 -->
+      <div class="ctl-btn" style="margin: 8px 0 8px 0;">
+        <el-button type="primary">复原</el-button>
+        <el-button type="primary">更新</el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -109,7 +114,6 @@ const cameraList = ref([
 
 // 显示信息的函数
 function showPopupInfo(id) {
-  debugger
   // 根据id获取摄像头信息
   const camera = cameraList.value.find(camera => camera.id === id)
   if (camera) {
