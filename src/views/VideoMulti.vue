@@ -49,6 +49,7 @@ import { toggleDebugCameraPrimitives } from '@/utils/updateMultiVideo'
 let viewer = null
 const showInfoBox = ref(false)
 const frustumShow = ref(false)
+const pickedCameraID = ref('')  // 当前选中摄像头ID
 // 摄像头参数最大最小值
 const infoList = {
   heading: [0, 360, 1],
@@ -131,12 +132,13 @@ const cameraList = ref([
  * 显示信息的函数
  */
 function showPopupInfo(id) {
+  debugger
   // 根据id获取摄像头信息
   const camera = cameraList.value.find(camera => camera.id === id)
   if (camera) {
     showInfoBox.value = true
     // 将摄像头信息赋值给infoContent
-    infoContent.value = cameraList.value.find(camera => camera.id === id).stanceOption
+    infoContent.value = JSON.parse(JSON.stringify(cameraList.value.find(camera => camera.id === id).stanceOption))
     // 保存camera
     infoCamera.value = cameraList.value.find(camera => camera.id === id).camera
     // copy一份老的数据
@@ -180,7 +182,6 @@ watch(infoContent, (newValue, oldValue) => {
  */
 function restoreToOldStanceOption() {
   infoContent.value = JSON.parse(JSON.stringify(infoContentOriginal.value))
-  
 }
 function updateToNewStanceOption() {
   const index = cameraList.value.findIndex(c => c.id === infoContent.value.id)
@@ -189,6 +190,8 @@ function updateToNewStanceOption() {
       ...cameraList.value[index],
       stanceOption: infoContent.value
     }
+    // 更新新的infoContentOriginal
+    infoContentOriginal.value = JSON.parse(JSON.stringify(infoContent.value))
   }
   console.log('newCameraList', cameraList.value.find(c => c.id === infoContent.value.id))
 }
@@ -303,6 +306,22 @@ onMounted(() => {
 
 
   /**
+   * 在拾取到非摄像头debugPrimitive或者没有拾取到东西时，复原摄像头姿态参数（如果infoContent有变化）
+   */
+  function restoreCameraDuringPicking() {
+    /**
+     * 没有拾取到 DebugCameraPrimitive，也要复原
+    */
+    const cameraListInfo = cameraList.value.find(c => c.id === infoContent.value.id)
+    if (cameraListInfo && JSON.stringify(infoContent.value) !== JSON.stringify(infoContentOriginal.value)) {
+      updateCamera(infoCamera.value, infoContentOriginal.value)
+      // 清空infoContent和camera
+      infoContent.value = infoContentOriginal.value
+      infoCamera.value = infoCameraOriginal.value
+    }
+  }
+  
+  /**
    * 监听事件
    */
   viewer.scene.canvas.addEventListener('click', (event) => {
@@ -311,18 +330,37 @@ onMounted(() => {
 
     // 从屏幕坐标拾取场景对象
     const pickedObject = viewer.scene.pick(screenPosition)
+
     if (Cesium.defined(pickedObject)) {
       // 检查是否点击到了 DebugCameraPrimitive（frustum）
       if (pickedObject.primitive instanceof Cesium.DebugCameraPrimitive) {
         const id = pickedObject.primitive.id
         console.log("DebugCameraPrimitive id:", id)
+        // 如果和上一个不同
+        if (id !== pickedCameraID.value) {
+          // 如果上一个未更新，则复原
+          restoreCameraDuringPicking()
+        }
+        pickedCameraID.value = id // 保存当前选中摄像头ID
         showPopupInfo(id)
       } else {
         showInfoBox.value = false
+
+        // 拾取到非摄像头debugPrimitive，也要复原
+        restoreCameraDuringPicking()
+
+        // 重置选中摄像头ID
+        pickedCameraID.value = ''
       }
     } else {
       // 如果没有拾取到任何对象，隐藏信息框
       showInfoBox.value = false
+
+      // 没有拾取到东西，也要复原
+      restoreCameraDuringPicking()
+
+      // 重置选中摄像头ID
+      pickedCameraID.value = ''
     }
   })
 })
