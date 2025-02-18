@@ -2,7 +2,9 @@ import * as Cesium from 'cesium'
 
 class CustomPrimitive {
   constructor(position, viewer, cameraID, stanceOption) {
-    this.shadowMap = createShadowMap(position, viewer, cameraID, stanceOption)
+    const { shadowMap, camera } = createShadowMap(position, viewer, cameraID, stanceOption)
+    this.shadowMap = shadowMap
+    this.camera = camera
   }
 
   isDestroyed() {
@@ -21,8 +23,8 @@ function createShadowMap(position, viewer, cameraID, stanceOption) {
   camera.setView({
     destination: position,
     orientation: {
-      heading: Cesium.Math.toRadians(stanceOption.heading-90),
-      pitch: Cesium.Math.toRadians(stanceOption.pitch-90),
+      heading: Cesium.Math.toRadians(stanceOption.heading - 90),
+      pitch: Cesium.Math.toRadians(stanceOption.pitch - 90),
       roll: Cesium.Math.toRadians(stanceOption.roll),
     },
   })
@@ -32,6 +34,7 @@ function createShadowMap(position, viewer, cameraID, stanceOption) {
     near: 0.01,
     far: stanceOption.distance,
   })
+
   let cameraPrimitive = new Cesium.DebugCameraPrimitive({
     camera: camera,
     color: Cesium.Color.RED,
@@ -50,21 +53,26 @@ function createShadowMap(position, viewer, cameraID, stanceOption) {
     },
     show: false,
   })
+
   let shadowMap = new Cesium.ShadowMap({
     lightCamera: camera,
     context: viewer.scene.context,
-    isSpotLight: !0,
-    isPointLight: !1,
-    cascadesEnabled: !1,
+    isSpotLight: true,
+    isPointLight: false,
+    cascadesEnabled: false,
     darkness: 1,
   })
-  return shadowMap
+
+  // 返回 shadowMap 和 camera
+  return { shadowMap, camera }
 }
 
 export function createVideo3D(position, viewer, videoEle, cameraID, stanceOption) {
   let primitive = new CustomPrimitive(position, viewer, cameraID, stanceOption)
   viewer.scene.primitives.add(primitive)
+
   const shadowMap = primitive.shadowMap
+  const camera = primitive.camera // 获取 camera
 
   let fragmentShader = `
     uniform sampler2D colorTexture;
@@ -125,6 +133,7 @@ export function createVideo3D(position, viewer, videoEle, cameraID, stanceOption
     context: viewer.scene.context,
     source: videoEle,
   })
+
   let bias = shadowMap._primitiveBias
   let scratchTexelStepSize = new Cesium.Cartesian2()
   let uniforms = {
@@ -186,10 +195,14 @@ export function createVideo3D(position, viewer, videoEle, cameraID, stanceOption
     combinedUniforms1: new Cesium.Cartesian4(),
     combinedUniforms2: new Cesium.Cartesian4(),
   }
+
   let postProcessStage = new Cesium.PostProcessStage({
     fragmentShader: fragmentShader,
     uniforms: uniforms,
   })
 
   viewer.scene.postProcessStages.add(postProcessStage)
+
+  // 返回 camera
+  return { camera }
 }

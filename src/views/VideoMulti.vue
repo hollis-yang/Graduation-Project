@@ -32,8 +32,8 @@
       </div>
       <!-- 复原与确认按钮 -->
       <div class="ctl-btn" style="margin: 8px 0 8px 0;">
-        <el-button type="primary">复原</el-button>
-        <el-button type="primary">更新</el-button>
+        <el-button type="primary" @click="restoreToOldStanceOption">复原</el-button>
+        <el-button type="primary" @click="updateToNewStanceOption">更新</el-button>
       </div>
     </div>
   </div>
@@ -49,6 +49,7 @@ import { toggleDebugCameraPrimitives } from '@/utils/updateMultiVideo'
 let viewer = null
 const showInfoBox = ref(false)
 const frustumShow = ref(false)
+// 摄像头参数最大最小值
 const infoList = {
   heading: [0, 360, 1],
   pitch: [-180, 180, 1],
@@ -57,6 +58,7 @@ const infoList = {
   aspectRatio: [0.1, 5, 0.1],
   distance: [1, 2000, 1],
 }
+// 当前选中摄像头信息（实时）
 const infoContent = ref({
   id: '',
   heading: 0,
@@ -66,6 +68,19 @@ const infoContent = ref({
   aspectRatio: 0,
   distance: 0,
 })
+const infoCamera = ref(null)
+// 当前选中摄像头信息（原始）
+const infoContentOriginal = ref({
+  id: '',
+  heading: 0,
+  pitch: 0,
+  roll: 0,
+  fov: 0,
+  aspectRatio: 0,
+  distance: 0,
+  camera: null,
+})
+const infoCameraOriginal = ref(null)
 
 const cameraList = ref([
   {
@@ -112,15 +127,72 @@ const cameraList = ref([
   }
 ])
 
-// 显示信息的函数
+/**
+ * 显示信息的函数
+ */
 function showPopupInfo(id) {
   // 根据id获取摄像头信息
   const camera = cameraList.value.find(camera => camera.id === id)
   if (camera) {
     showInfoBox.value = true
+    // 将摄像头信息赋值给infoContent
     infoContent.value = cameraList.value.find(camera => camera.id === id).stanceOption
+    // 保存camera
+    infoCamera.value = cameraList.value.find(camera => camera.id === id).camera
+    // copy一份老的数据
+    infoContentOriginal.value = JSON.parse(JSON.stringify(infoContent.value))
+    infoCameraOriginal.value = infoCamera.value
   }
 }
+
+/**
+ * 更新摄像头参数
+ */
+function updateCamera(camera, position) {
+  camera.setView({
+    // destination: p,
+    orientation: {
+      heading: Cesium.Math.toRadians(position.heading-90),
+      pitch: Cesium.Math.toRadians(position.pitch-90),
+      roll: Cesium.Math.toRadians(position.roll)
+    }
+  })
+
+  camera.frustum = new Cesium.PerspectiveFrustum({
+    fov: Cesium.Math.toRadians(position.fov),
+    aspectRatio: position.aspectRatio,
+    near: 0.01,
+    far: position.distance
+  })
+}
+
+/**
+ * 深度监听 infoContent 变化
+ */
+watch(infoContent, (newValue, oldValue) => {
+  if (infoCamera.value) {
+    updateCamera(infoCamera.value, newValue)
+  }
+}, { deep: true })
+
+/**
+ * 复原/更新姿态参数
+ */
+function restoreToOldStanceOption() {
+  infoContent.value = JSON.parse(JSON.stringify(infoContentOriginal.value))
+  
+}
+function updateToNewStanceOption() {
+  const index = cameraList.value.findIndex(c => c.id === infoContent.value.id)
+  if (index !== -1) {
+    cameraList.value[index] = {
+      ...cameraList.value[index],
+      stanceOption: infoContent.value
+    }
+  }
+  console.log('newCameraList', cameraList.value.find(c => c.id === infoContent.value.id))
+}
+
 
 /**
  * 监听是否显示视锥体
@@ -205,10 +277,18 @@ onMounted(() => {
     videoEle.addEventListener('loadeddata', () => {
       let p = camera.position
       let p1 = Cesium.Cartesian3.fromDegrees(p[0], p[1], p[2])
-      createVideo3D(p1, viewer, videoEle, camera.id, camera.stanceOption)
+      const { camera: createdCamera } = createVideo3D(p1, viewer, videoEle, camera.id, camera.stanceOption)
+      debugger
+      // 将获得的 camera 保存到 cameraList 中
+      const index = cameraList.value.findIndex(c => c.id === camera.id)
+      if (index !== -1) {
+        cameraList.value[index] = {
+          ...cameraList.value[index],
+          camera: createdCamera, // 保存返回的 camera
+        }
+      }
     })
   })
-
 
   // 飞到默认位置
   viewer.camera.flyTo({
